@@ -3,7 +3,8 @@ from osclib.request_finder import RequestFinder
 
 
 class IgnoreCommand(object):
-    MESSAGE = 'Ignored: removed from active backlog.'
+    MESSAGE = 'Removed from active backlog.'
+    COMMENT_TEMPLATE = '(Automated comment) Request marked as ignored, reason: "{}"'
 
     def __init__(self, api):
         self.api = api
@@ -18,6 +19,6 @@ class IgnoreCommand(object):
             print('{}: ignored'.format(request_id))
             comment = message if message else self.MESSAGE
             self.api.add_ignored_request(request_id, comment)
-            self.comment.add_comment(request_id=str(request_id), comment=comment)
+            self.comment.add_comment(request_id=str(request_id), comment=self.COMMENT_TEMPLATE.format(comment))
 
         return True
