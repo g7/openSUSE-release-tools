@@ -3,7 +3,7 @@ name: Checks
 on:
   push:
     branches:
-    - master
+    - changelog-checker-factories-test
   pull_request:
     branches:
     - master
