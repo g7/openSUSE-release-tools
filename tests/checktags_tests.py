@@ -221,7 +221,7 @@ Pico text editor while also offering a few enhancements.</description>
         self.checker.set_request_ids(['293129'])
         self.checker.check_requests()
 
-        self.assertEqual(result['state_accepted'], accept)
+        self.assertEqual(result['state_accepted'], "aaaaa")#accept)
 
     def test_1_issue_accept(self):
         # a new package and has issues
