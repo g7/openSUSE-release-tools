@@ -198,6 +198,61 @@ class ChangeLogger(cmdln.Cmdln):
         return group
 
     @cmdln.option("--dir", action="store", type='string', dest='dir', help="data directory")
+    def do_diffsle(self, subcmd, opts, version1, version2):
+        """${cmd_name}: diff two snapshots
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if not opts.dir:
+            raise Exception("need --dir option")
+        if not os.path.isdir(opts.dir):
+            raise Exception("%s must be a directory" % opts.dir)
+
+        f = open(os.path.join(opts.dir, version1), 'rb')
+        (v, (v1pkgs, v1changelogs)) = pickle.load(f,
+                                                  encoding='utf-8', errors='backslashreplace')
+        if v != data_version:
+            raise Exception("not matching version %s in %s" % (v, version1))
+        f = open(os.path.join(opts.dir, version2), 'rb')
+        (v, (v2pkgs, v2changelogs)) = pickle.load(f,
+                                                  encoding='utf-8', errors='backslashreplace')
+        if v != data_version:
+            raise Exception("not matching version %s in %s" % (v, version2))
+
+        p1 = set(v1pkgs.keys())
+        p2 = set(v2pkgs.keys())
+
+        removed = p1 - p2
+        added = p2 - p1
+        updated = p2 - added
+
+        print("Added packages\n--------------")
+        if added:
+            for pkg in sorted(added):
+                print("* %(pkg)s: %(new_version)s" % {"pkg" : pkg, "new_version" : "%s-%s" % (v2pkgs[pkg]['version'], v2pkgs[pkg]['release'])})
+            print()
+        else:
+            print("None\n")
+
+        print("Updated packages\n----------------")
+        if updated:
+            for pkg in sorted(updated):
+                if v1pkgs[pkg]['version'] != v2pkgs[pkg]['version']:
+                    print("* %(pkg)s: %(old_version)s => %(new_version)s" % {"pkg" : pkg, "old_version" : "%s-%s" % (v1pkgs[pkg]['version'], v1pkgs[pkg]['release']), "new_version" : "%s-%s" % (v2pkgs[pkg]['version'], v2pkgs[pkg]['release'])})
+            print()
+        else:
+            print("None\n")
+
+        print("Removed Packages\n----------------")
+        if removed:
+            for pkg in sorted(removed):
+                print("* %(pkg)s" % {"pkg" : pkg})
+            print()
+        else:
+            print("None\n")
+
+    @cmdln.option("--dir", action="store", type='string', dest='dir', help="data directory")
     def do_diff(self, subcmd, opts, version1, version2):
         """${cmd_name}: diff two snapshots
 
