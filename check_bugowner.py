@@ -18,6 +18,7 @@ from urllib.error import HTTPError
 import osc.conf
 import osc.core
 import ReviewBot
+from plat.gitea import User
 
 http_GET = osc.core.http_GET
 MAINTAINERSHIP_FILE = "_maintainership.json"
@@ -105,6 +106,11 @@ class CheckerBugowner(ReviewBot.ReviewBot):
     def exists_in(self, project, package):
         url = osc.core.makeurl(self.apiurl, ['source', project, package])
         return self.existing_url(url)
+
+    def _get_gitea_user(self, name):
+        user_res = self.platform.api.get(f"users/{name}")
+        user_res.raise_for_status()
+        return User(user_res.json())
 
     def _gitea_cache_dir(self):
         if "OSRT_CHECK_BUGOWNER_CACHE_HOME" in os.environ.keys():
@@ -269,9 +275,13 @@ class CheckerBugowner(ReviewBot.ReviewBot):
             to_validate = changed_submodules.intersection(referenced_packages)
 
         warnings = []
+        changed_submodules_downcased = {s.lower() for s in changed_submodules}
         # Validate referencing PRs
         for package in referenced_packages:
-            if package not in changed_submodules:
+            # Some PR references contain downcased package names,
+            # this is because they are supposed to be case insensitive for Gitea.
+            # This test checks lowercase PR references and submodule names.
+            if package.lower() not in changed_submodules_downcased:
                 msg = f"A PR for {package} is mentioned in the description but no changed submodules were detected."
                 self.logger.warning(msg)
                 warnings.append(msg)
@@ -330,7 +340,7 @@ class CheckerBugowner(ReviewBot.ReviewBot):
         for o in owner:
             if o and (o not in self._cache(self.email_cache).keys()):
                 try:
-                    self._cache_set(self.email_cache, o, self.platform.get_user(o).email)
+                    self._cache_set(self.email_cache, o, self._get_gitea_user(o).email)
                 except (HTTPError, requests.exceptions.HTTPError):
                     self._cache_set(self.email_cache, o, None)
         return [self._cache_get(self.email_cache, o) for o in owner]
@@ -410,10 +420,7 @@ class CheckerBugowner(ReviewBot.ReviewBot):
         if self.request.actions[0].src_branch:
             head_revision = self.request.actions[0].src_branch
 
-        if head_revision == base_revision:
-            head_revision_name = f"{head_project}_{head_package}_{head_revision}"
-        else:
-            head_revision_name = None
+        head_revision_name = f"{head_project}_{head_package}_{head_revision}"
 
         referenced_prs = [
             line
@@ -464,7 +471,7 @@ class CheckerBugowner(ReviewBot.ReviewBot):
 
         # Cleanup branches
         self.scm.checkout_revision(repo, base_revision)
-        repo.git.branch("-D", head_revision_name if head_revision_name else head_revision)
+        repo.git.branch("-D", head_revision_name)
         repo.git.branch("-D", "-r", f"{head_remote_name}/{head_revision}")
 
         return is_valid
