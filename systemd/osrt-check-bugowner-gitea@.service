@@ -9,8 +9,6 @@ User=osrt-staging
 SyslogIdentifier=osrt-slsa
 EnvironmentFile=/etc/default/osrt-check-bugowner-gitea-%i.env
 Environment="OSRT_BUGOWNER_CACHE_HOME=/var/lib/osrt-staging/check-bugowner"
-Environment="GITEA_URL=https://$GITEA_INSTANCE"
-Environment="GIT_BASE_URL=https://%i:$GITEA_ACCESS_TOKEN@$GITEA_INSTANCE"
 WorkingDirectory=/var/lib/osrt-staging/check-bugowner
 ExecStartPre=/bin/bash -xc '/usr/bin/systemctl is-active --quiet osrt-check-bugowner-gitea@%i.service && exit 1 || exit 0'
 ExecStart=/usr/bin/osrt-check_bugowner --scm=git --platform=gitea --gitea-url="${GITEA_URL}" --user="%i" --verbose --ldap review

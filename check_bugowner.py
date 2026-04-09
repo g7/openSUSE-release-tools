@@ -308,7 +308,7 @@ class CheckerBugowner(ReviewBot.ReviewBot):
         for e in email:
             if e:
                 if e not in self._cache(self.ldap_cache).keys():
-                    result = instance.search_s(
+                    result = instance.search_st(
                         "OU=User accounts,DC=corp,DC=suse,DC=com",
                         ldap.SCOPE_SUBTREE,
                         filterstr=f"(mail={e})",
