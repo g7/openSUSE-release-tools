@@ -975,8 +975,6 @@ class CommandLineInterface(cmdln.Cmdln):
         else:
             apiurl = self.options.apiurl
 
-        git_base_url = os.environ["GIT_BASE_URL"] if "GIT_BASE_URL" in os.environ.keys() else self.options.git_base_url
-
         return self.clazz(apiurl=apiurl,
                           dryrun=self.options.dry,
                           user=user,
@@ -985,7 +983,7 @@ class CommandLineInterface(cmdln.Cmdln):
                           scm_type=self.options.scm_type,
                           platform_type=self.options.platform_type,
                           gitea_url=self.options.gitea_url,
-                          git_base_url=git_base_url)
+                          git_base_url=os.environ.get("GIT_BASE_URL", self.options.git_base_url))
 
     def do_id(self, subcmd, opts, *args):
         """${cmd_name}: check the specified request ids
